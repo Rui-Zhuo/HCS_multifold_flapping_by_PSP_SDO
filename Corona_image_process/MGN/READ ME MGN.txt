@@ -1,0 +1,27 @@
+Dear Users,
+
+Thank you for downloading our code for Multiscale Gausian Normalization.
+
+Attached is the IDL MGN code, and here is an example for simple use. 
+
+> read_sdo,file,hdr,image
+> image=image/hdr.exptime;normalize exposure time
+> imdisp=mgn(image,h=0.95)
+> tv,hist_equal(imdisp,percent=0.05)
+
+For batch processing, I sometimes do other steps such as finding data minimum and maximum over the whole batch. You can also experiment with the 'h=0.95' setting which controls the weighting of enhanced and original images in the output. 
+
+A more pleasing method for batch processing is to use the same thresholds for all images, for example:
+
+> imdisp=mgn(image,h=0.925)
+> indnan=where(~finite(imdisp),cntnan,comp=nindnan);identify NANs
+> imdisp=(imdisp>minval)<maxval      ;threshold output
+> imdisp=(imdisp-minval)*255/(maxval-minval)    ; normalize to 255 max
+> imdisp=byte(imdisp)     ;convert to byte
+> if cntnan gt 0 then imdisp[indnan]=200      ;set NANs to 200 (light grey)
+
+with minval and maxval set to 0.1,0.73 respectively, and h=0.925 for mgn - this works well for most channels. For 335 and 131 channels I use minval=0.4 and maxval=0.69.
+
+If you use MGN images in a publication please cite the 2014 Solar Physics paper (http://adsabs.harvard.edu/abs/2014SoPh..289.2945M)
+
+Happy Processing!
