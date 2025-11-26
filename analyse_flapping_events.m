@@ -5,7 +5,7 @@ save_or_not = 0;
 mean_or_local = 0;
 which_cross = 0;
 data_store = ['E:\Research\Data\PSP\Encounter ',num2str(encounter),'\'];
-data_save  = ['E:\Research\Work\current_sheet_flapping\Encounter ',num2str(encounter),'\flapping_events\'];
+data_save  = ['E:\Research\Work\HCS_multifold_flapping_by_PSP_SDO\Encounter ',num2str(encounter),'\'];
 %% which encounter
 if encounter == 5 % 2020-06-08 spi
     year = 2020;
@@ -209,7 +209,7 @@ for i_flap = 1:1%flap_num
     Vsc_spi(abs(Vsc_spi)>1e3) = nan;
     SC2RTN = spdfcdfread(spi_dir,'Variables','ROTMAT_SC_INST');
     Vrtn2sc_spi = (SC2RTN) * Vsc_spi';
-        %% switch Vrtn to inertial RTN frame
+    %% switch Vrtn to inertial RTN frame
     sc_vel_RTNr_interp = interp1(spc_Epoch,sc_vel_RTNr,spi_Epoch,'pchip');
     sc_vel_RTNt_interp = interp1(spc_Epoch,sc_vel_RTNt,spi_Epoch,'pchip');
     sc_vel_RTNn_interp = interp1(spc_Epoch,sc_vel_RTNn,spi_Epoch,'pchip');
