@@ -8,3 +8,25 @@ authors:
   - family-names: "Zhuo"
     given-names: "Rui"
 repository-code: "https://github.com/Rui-Zhuo/HCS_multifold_flapping_by_PSP_SDO"
+preferred-citation:
+  type: article
+  title: "Flapping of Multifold Heliospheric Current Sheet Observed by Parker Solar Probe"
+  authors:
+    - family-names: "Zhuo"
+      given-names: "Rui"
+      orcid: "https://orcid.org/0000-0003-4726-9755"
+    - family-names: "He"
+      given-names: "Jiansen"
+    - family-names: "Duan"
+      given-names: "Die"
+    - family-names: "Wu"
+      given-names: "Ziqi"
+    - family-names: "Hou"
+      given-names: "Chuanpeng"
+  journal: "The Astrophysical Journal"
+  volume: 1000
+  issue: 2
+  year: 2026
+  month: 4
+  doi: "10.3847/1538-4357/ae40ff"
+  url: "https://iopscience.iop.org/article/10.3847/1538-4357/ae40ff/meta"

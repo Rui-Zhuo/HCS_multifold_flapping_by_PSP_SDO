@@ -71,9 +71,32 @@ set through the `HCS_*` environment variables documented in `hcs_config.m`.
 and includes its own notices. Check the redistribution terms of every external
 component before making the GitHub repository public.
 
-## Citation and licence
+## Related publication and citation
 
-Project citation metadata are provided in `CITATION.cff`; replace the placeholder
-author fields before release. No project-wide open-source licence is asserted by
-this cleanup. Add a licence only after confirming that it is compatible with the
-external code and data products included in the repository.
+This repository contains the analysis code associated with:
+
+> Zhuo, R., He, J., Duan, D., Wu, Z., & Hou, C. (2026).
+> “Flapping of Multifold Heliospheric Current Sheet Observed by Parker Solar
+> Probe.” *The Astrophysical Journal*, **1000**, 243.
+> [https://doi.org/10.3847/1538-4357/ae40ff](https://iopscience.iop.org/article/10.3847/1538-4357/ae40ff/meta)
+
+BibTeX:
+
+```bibtex
+@article{Zhuo2026HCSFlapping,
+  author  = {Zhuo, Rui and He, Jiansen and Duan, Die and Wu, Ziqi and Hou, Chuanpeng},
+  title   = {Flapping of Multifold Heliospheric Current Sheet Observed by Parker Solar Probe},
+  journal = {The Astrophysical Journal},
+  year    = {2026},
+  volume  = {1000},
+  number  = {2},
+  eid     = {243},
+  doi     = {10.3847/1538-4357/ae40ff},
+  url     = {https://doi.org/10.3847/1538-4357/ae40ff}
+}
+```
+
+GitHub-compatible citation metadata are provided in `CITATION.cff`. No
+project-wide open-source licence is asserted by this cleanup. Add a licence only
+after confirming that it is compatible with the external code and data products
+included in the repository.

@@ -18,7 +18,8 @@
 - Select a project-wide licence only after confirming compatibility with the
   bundled external code.
 - Confirm the author and repository fields in `CITATION.cff`.
-- Add the associated article citation when it becomes available.
+- Confirm that GitHub renders the preferred article citation from
+  `CITATION.cff`.
 
 ## GitHub settings
 
