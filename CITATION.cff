@@ -17,12 +17,16 @@ preferred-citation:
       orcid: "https://orcid.org/0000-0003-4726-9755"
     - family-names: "He"
       given-names: "Jiansen"
+      orcid: "https://orcid.org/0000-0001-8179-417X"
     - family-names: "Duan"
       given-names: "Die"
+      orcid: "https://orcid.org/0000-0002-6300-6800"
     - family-names: "Wu"
       given-names: "Ziqi"
+      orcid: "https://orcid.org/0000-0002-1349-8720"
     - family-names: "Hou"
       given-names: "Chuanpeng"
+      orcid: "https://orcid.org/0000-0001-7205-2449"
   journal: "The Astrophysical Journal"
   volume: 1000
   issue: 2

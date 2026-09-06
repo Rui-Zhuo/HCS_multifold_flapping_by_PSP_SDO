@@ -80,6 +80,11 @@ This repository contains the analysis code associated with:
 > Probe.” *The Astrophysical Journal*, **1000**, 243.
 > [https://doi.org/10.3847/1538-4357/ae40ff](https://iopscience.iop.org/article/10.3847/1538-4357/ae40ff/meta)
 
+The open-access Version of Record is also archived in this repository:
+[download the paper PDF](docs/paper/Zhuo_et_al_2026_ApJ_HCS_flapping.pdf).
+The article is distributed under the
+[Creative Commons Attribution 4.0 licence](https://creativecommons.org/licenses/by/4.0/).
+
 BibTeX:
 
 ```bibtex
