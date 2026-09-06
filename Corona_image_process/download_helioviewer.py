@@ -1,35 +1,74 @@
-from sunpy.io import read_file
-from sunpy.map import Map
-from sunpy.net import helioviewer
-from sunpy.net import Fido
-from sunpy.net import attrs as a
-import datetime as dt
+"""Compare near-simultaneous SOHO/LASCO images from Helioviewer and VSO."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timedelta
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 
-date = dt.datetime(2011,1,14,12,0)
+from hcs_flapping.utils import ensure_directory
 
-fig = plt.figure()
 
-# Helioviewer image
-hv = helioviewer.HelioviewerClient()
-file = hv.download_jp2(date, observatory='SOHO', instrument='LASCO', detector='C2')
-data, header = read_file(file)[0]
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--time", default="2011-01-14T12:00:00")
+    parser.add_argument("--output", type=Path, default=Path("outputs/helioviewer"))
+    parser.add_argument("--detector", default="C2", choices=("C2", "C3"))
+    parser.add_argument("--save", type=Path)
+    return parser.parse_args()
 
-print(header['CROTA2']) # -> -173.555
 
-map = Map(data, header)
+def main() -> None:
+    """Download, compare, and plot both LASCO products."""
+    args = parse_args()
+    from sunpy.io import read_file
+    from sunpy.map import Map
+    from sunpy.net import Fido, attrs as a, helioviewer
 
-ax1 = fig.add_subplot(1,2,1,projection=map)
-map.plot(axes=ax1)
+    observation_time = datetime.fromisoformat(args.time)
+    output_dir = ensure_directory(args.output)
+    client = helioviewer.HelioviewerClient()
+    hv_file = client.download_jp2(
+        observation_time,
+        observatory="SOHO",
+        instrument="LASCO",
+        detector=args.detector,
+        directory=str(output_dir),
+    )
+    hv_data, hv_header = read_file(hv_file)[0]
+    hv_map = Map(hv_data, hv_header)
 
-# Vso image
-result = Fido.search(a.Time(date, date + dt.timedelta(minutes=10)), a.Instrument.lasco, a.Detector.c3)
-downloaded_files = Fido.fetch(result)
+    result = Fido.search(
+        a.Time(observation_time, observation_time + timedelta(minutes=10)),
+        a.Instrument.lasco,
+        a.Detector(args.detector.lower()),
+    )
+    if len(result) == 0:
+        raise RuntimeError("VSO returned no LASCO records")
+    downloaded = Fido.fetch(result[0, 0], path=str(output_dir))
+    vso_data, vso_header = read_file(downloaded[0])[0]
+    vso_map = Map(vso_data, vso_header)
 
-data, header = read_file(downloaded_files[0])[0]
-print(header['CROTA2']) # -> -173.554
-map2 = sunpy.map.Map(data, header)
-ax2 = fig.add_subplot(1,2,2,projection=map2)
-map2.plot(axes=ax2)
+    print(f"Helioviewer CROTA2: {hv_header.get('CROTA2')}")
+    print(f"VSO CROTA2: {vso_header.get('CROTA2')}")
+    figure = plt.figure(figsize=(12, 5))
+    hv_axes = figure.add_subplot(1, 2, 1, projection=hv_map)
+    vso_axes = figure.add_subplot(1, 2, 2, projection=vso_map)
+    hv_map.plot(axes=hv_axes)
+    vso_map.plot(axes=vso_axes)
+    hv_axes.set_title("Helioviewer JP2")
+    vso_axes.set_title("VSO FITS")
+    figure.tight_layout()
+    if args.save:
+        save_path = ensure_directory(args.save.parent) / args.save.name
+        figure.savefig(save_path, dpi=300, bbox_inches="tight")
+        print(f"Saved: {save_path}")
+    else:
+        plt.show()
 
-plt.show()
+
+if __name__ == "__main__":
+    main()

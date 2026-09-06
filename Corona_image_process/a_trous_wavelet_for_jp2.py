@@ -1,26 +1,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sunpy.map
 import sunkit_image.enhance as enhance
 import cv2
 import os
-import sunpy
-from scipy import fftpack, signal
+from scipy import signal
 
-import CoronaImageProcess_utils
-from CoronaImageProcess_utils import build_atrous_coef, a_trous_wavelet_2D
+from hcs_flapping.utils import ensure_directory
+from hcs_flapping.config import load_config
+
+from CoronaImageProcess_utils import a_trous_wavelet_2D
 
 save_or_not = 1
 
 # preparation
 '''HelioViewer JP2 data download url: https://helioviewer.org/jp2/'''
 
-# data path 
-jp2_path = 'E:/Research/Data/HelioViewer/LASCO_C2/20211004/'
-save_path = 'E:/Research/Work/tianwen_IPS/LASCO_obs/20211004/'
+# Data paths
+config = load_config()
+jp2_path = str(config.path('lasco_jp2_20211004', 'data/HelioViewer/LASCO_C2/20211004')) + os.sep
+save_path = str(config.path('corona_atrous_output', 'outputs/corona/20211004')) + os.sep
+if save_or_not:
+    for subdirectory in ('raw', 'mgn', 'a_trous', 'mgn_a_trous', 'a_trous_mgn'):
+        ensure_directory(os.path.join(save_path, subdirectory))
 
 for root, dirs, files in os.walk(jp2_path):
-    for file in files:
+    for file in sorted(files):
         if file.endswith('.jp2'):
             jp2_name = file            
 
@@ -45,7 +49,10 @@ for root, dirs, files in os.walk(jp2_path):
                 plt.close()
             
             ########## Apply Mulitscale Guassian Normalization only ##########
-            mgn_image = enhance.mgn(jpg_image,sigma=[1.25, 2.5, 5, 10, 20],weights=[0.907,0.976,1,1,1], k=0.8, gamma=1, h=0.9)
+            mgn_image = enhance.mgn(
+                jpg_image, sigma=[1.25, 2.5, 5, 10, 20],
+                weights=[0.907, 0.976, 1, 1, 1], k=0.8, gamma=1, h=0.9,
+            )
             
             # Plot MGN images
             plt.figure(figsize=(8,6))
@@ -84,11 +91,17 @@ for root, dirs, files in os.walk(jp2_path):
             plt.title('A-Trous-Wavelet-upon-MGN-' + jp2_name[:20])
 
             if save_or_not == 1:
-                plt.savefig(save_path + 'mgn_a_trous/' + jp2_name[:20] + '_mgn_a_trous.jpg', format='jpg')
+                plt.savefig(
+                    save_path + 'mgn_a_trous/' + jp2_name[:20] + '_mgn_a_trous.jpg',
+                    format='jpg',
+                )
                 plt.close()
             
             ######### Apply MGN upon A-Trous Wavelet ##########
-            a_trous_mgn_image = enhance.mgn(a_trous_image,sigma=[1.25, 2.5, 5, 10, 20],weights=[0.907,0.976,1,1,1], k=0.8, gamma=1, h=0.9)
+            a_trous_mgn_image = enhance.mgn(
+                a_trous_image, sigma=[1.25, 2.5, 5, 10, 20],
+                weights=[0.907, 0.976, 1, 1, 1], k=0.8, gamma=1, h=0.9,
+            )
                         
             # Plot a-trous-mgn images
             plt.figure(figsize=(8,6))
@@ -97,7 +110,10 @@ for root, dirs, files in os.walk(jp2_path):
             plt.title('MGN-upon-A-Trous-Wavelet-' + jp2_name[:20])
 
             if save_or_not == 1:
-                plt.savefig(save_path + 'a_trous_mgn/' + jp2_name[:20] + '_a_trous_mgn.jpg', format='jpg')
+                plt.savefig(
+                    save_path + 'a_trous_mgn/' + jp2_name[:20] + '_a_trous_mgn.jpg',
+                    format='jpg',
+                )
                 plt.close()
             else:
                 plt.show()

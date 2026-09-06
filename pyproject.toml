@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hcs-multifold-flapping"
+version = "0.1.0"
+description = "Analysis tools for multi-fold heliospheric current-sheet crossings"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "astropy==5.1.1",
+    "matplotlib==3.10.8",
+    "numpy==1.24.4",
+    "opencv-python==4.6.0.66",
+    "pfsspy==1.1.2",
+    "requests==2.28.1",
+    "scipy==1.9.1",
+    "spacepy==0.4.1",
+    "sunkit-image==0.5.0",
+    "sunpy==5.0.1",
+    "tomli==2.0.1; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8,<1",
+]
+
+[tool.setuptools.packages.find]
+include = ["hcs_flapping*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["FDIPS", "FDIPS_SWMF", "PSI-master", "Corona_image_process/MGN"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

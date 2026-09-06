@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the associated paper and this repository."
+title: "Multi-fold HCS flapping observed by PSP and SDO"
+type: software
+version: 0.1.0
+date-released: 2026-09-06
+authors:
+  - family-names: "Zhuo"
+    given-names: "Rui"
+repository-code: "https://github.com/Rui-Zhuo/HCS_multifold_flapping_by_PSP_SDO"

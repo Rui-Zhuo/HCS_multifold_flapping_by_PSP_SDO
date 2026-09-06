@@ -1,11 +1,12 @@
 clear; close all;
+cfg = hcs_config();
 encounter = 7;
 dTime = 0.02;
 save_or_not = 0;
 mean_or_local = 0;
 which_cross = 0;
-data_dir = ['E:\Research\Data\PSP\Encounter ',num2str(encounter),'\'];
-save_dir  = ['E:\Research\Work\HCS_multifold_flapping_by_PSP_SDO\Encounter ',num2str(encounter),'\'];
+data_dir = [fullfile(cfg.psp_data_root, ['Encounter ', num2str(encounter)]), filesep];
+save_dir = [fullfile(cfg.work_root, ['Encounter ', num2str(encounter)]), filesep];
 
 %% which encounter
 year = 2021;
@@ -116,11 +117,12 @@ set(gca, 'FontSize', FontSize)
 
 %% functions
 function [V,D,ratio21,ratio32] = get_LMN(Br,Bt,Bn,fld_Epoch,calc_beg_epoch,calc_end_epoch)
-    Br_calc = Br(find(fld_Epoch >= calc_beg_epoch & fld_Epoch <= calc_end_epoch)); 
+    calc_index = fld_Epoch >= calc_beg_epoch & fld_Epoch <= calc_end_epoch;
+    Br_calc = Br(calc_index);
     Br_calc(isnan(Br_calc)) = mean(Br_calc,'omitnan');
-    Bt_calc = Bt(find(fld_Epoch >= calc_beg_epoch & fld_Epoch <= calc_end_epoch)); 
+    Bt_calc = Bt(calc_index);
     Bt_calc(isnan(Bt_calc)) = mean(Bt_calc,'omitnan');
-    Bn_calc = Bn(find(fld_Epoch >= calc_beg_epoch & fld_Epoch <= calc_end_epoch)); 
+    Bn_calc = Bn(calc_index);
     Bn_calc(isnan(Bn_calc)) = mean(Bn_calc,'omitnan');
     M = [mean(Br_calc.*Br_calc) - mean(Br_calc)*mean(Br_calc), mean(Br_calc.*Bt_calc) - mean(Br_calc)*mean(Bt_calc), mean(Br_calc.*Bn_calc) - mean(Br_calc)*mean(Bn_calc);
          mean(Bt_calc.*Br_calc) - mean(Bt_calc)*mean(Br_calc), mean(Bt_calc.*Bt_calc) - mean(Bt_calc)*mean(Bt_calc), mean(Bt_calc.*Bn_calc) - mean(Bt_calc)*mean(Bn_calc);

@@ -1,5 +1,6 @@
 clear; close all;
-img_dir = 'E:\Research\Data\HelioViewer\20210117\171images\';
+cfg = hcs_config();
+img_dir = [fullfile(cfg.helioviewer_data_root, '20210117', '171images'), filesep];
 img_num = 97;
 img_height = 928;
 img_width = 1536;

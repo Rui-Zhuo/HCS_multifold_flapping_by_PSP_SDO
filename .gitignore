@@ -1,1 +1,24 @@
-/PSI-master
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+
+# Editors and operating systems
+.DS_Store
+Thumbs.db
+*.asv
+*.autosave
+
+# Local configuration and generated products
+config.toml
+hcs_config_local.m
+outputs/
+figures/
+*.log
+
+# Large external model source kept outside version control
+/PSI-master/

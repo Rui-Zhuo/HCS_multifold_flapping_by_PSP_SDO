@@ -1,9 +1,24 @@
-# CoronaImageProcess
+# Coronal image processing
 
-This is a repository about Corona Image Process. It contains: 
+Event-oriented scripts for enhancing SOHO/LASCO and related EUV/coronagraph
+images, extracting radial or lateral slits, and constructing time-distance maps.
 
--- multiscale_gaussian_normalization.py
+Main components:
 
-Based on 【金山文档】 (Morgan)(SoP-2014) Multi-Scale Gaussian Normalization for Solar Image Processing https://kdocs.cn/l/cjTKcX8CWohu. The fundamental code is provided by sunkit-image/multiscale_gaussian_normalization.html.
+- `multiscale_gaussian_normalization_for_fits.py`: reusable FITS MGN CLI;
+- `a_trous_wavelet_for_jp2.py`: a-trous and MGN comparison for JP2 sequences;
+- `slit_observation.py`: slit extraction and spectral filtering;
+- `CoronaImageProcess_utils.py`: shared wavelet, interpolation, and gap helpers;
+- `MGN/`: vendored legacy MGN/tomography implementation, kept unchanged.
 
-One should note that variables 'g_i' in Morgan(2014) are all set to be '1' in source code enhance.mgn(). If the Guassian Core used is small than 3, one should feed 'g_i' into enhance.mgn(), according the list or calculating method provided in Morgan(2014).
+Run `python -m Corona_image_process.multiscale_gaussian_normalization_for_fits --help`
+from the repository root for the portable entry point. Older event scripts retain their
+historical absolute path defaults; edit them or migrate the path to the root
+`config.toml` before use.
+
+The MGN parameter sets are centralized in `hcs_flapping/constants.py`. They
+follow the existing project settings and call `sunkit_image.enhance.mgn`.
+Consult [Morgan & Druckmuller (2014)](https://link.springer.com/article/10.1007/s11207-014-0523-9),
+*Solar Physics*, 289, 2945--2955, and the
+sunkit-image documentation when changing Gaussian widths or weights. Verify the
+licence and attribution of files under `MGN/` before redistribution.

@@ -1,4 +1,5 @@
 clear; close all;
+cfg = hcs_config();
 %% parameter
 % unit conversion
 deg2rad = pi/180; % from [deg.] to [rad.]
@@ -16,7 +17,7 @@ ss = 2.5; % source surface [Rs]
 vc = sqrt(2 * kB * T / mp); % [m/s]
 rc = G * Ms * mp / 4 / kB / T; % [m]
 %% import data: Br in the source surface
-csv_store  = ['E:\Research\Work\current_sheet_flapping\20210117\'];
+csv_store = [fullfile(cfg.legacy_work_root, '20210117'), filesep];
 lon = importdata([csv_store,'longitude.csv']);
 lon_arr = lon(:,1)'; % [deg.]
 lat = importdata([csv_store,'latitude.csv']);
@@ -155,7 +156,7 @@ thetaS_tot = [thetaS1_form,thetaS_modif,thetaS1_late,flip(thetaS2),thetaS3,theta
 % calculat numerical points of Parker Spiral
 [x_tot,y_tot,z_tot,t] = CalcParker(r_num,r_gap,phiS_tot,thetaS_tot,r_std,vc,rc);
 %% import data: orbit of PSP
-data_store = ['E:\Research\Data\PSP\Encounter 7\'];
+data_store = [fullfile(cfg.psp_data_root, 'Encounter 7'), filesep];
 spc_dir = [data_store,'psp_swp_spc_l3i_20210117_v02.cdf'];
 spc_info = spdfcdfinfo(spc_dir);
 spc_Epoch = spdfcdfread(spc_dir,'Variables','Epoch');
@@ -178,7 +179,7 @@ x_end = r_end * cosd(lat_end) * cosd(lon_end);
 y_end = r_end * cosd(lat_end) * sind(lon_end);
 z_end = r_end * sind(lat_end);
 %% import data: Br, Bt, Bp in 3-D spherical coordinate
-hdf_store = ['E:\Research\Data\PSI\20210117\'];
+hdf_store = [fullfile(cfg.psi_data_root, '20210117'), filesep];
 Br_file = [hdf_store,'br002.h5'];
 Bt_file = [hdf_store,'bt002.h5'];
 Bp_file = [hdf_store,'bp002.h5'];
@@ -209,9 +210,9 @@ Bx_sub = Br_sub .* sin(t_sub) .* cos(p_sub) + Bt_sub .* cos(t_sub) .* cos(p_sub)
 By_sub = Br_sub .* sin(t_sub) .* sin(p_sub) + Bt_sub .* cos(t_sub) .* sin(p_sub) + Bp_sub .* cos(p_sub);
 Bz_sub = Br_sub .* cos(t_sub) - Bt_sub .* sin(t_sub);
 % standard 3-D grids
-xx_interp = [-2.5:0.5:2.5];
-yy_interp = [-2.5:0.5:2.5];
-zz_interp = [-2.5:0.5:2.5];
+xx_interp = -2.5:0.5:2.5;
+yy_interp = -2.5:0.5:2.5;
+zz_interp = -2.5:0.5:2.5;
 [x_interp,y_interp,z_interp] = meshgrid(xx_interp,yy_interp,zz_interp);
 Bx_interp = griddata(x_sub,y_sub,z_sub,Bx_sub,x_interp,y_interp,z_interp,'linear');
 By_interp = griddata(x_sub,y_sub,z_sub,By_sub,x_interp,y_interp,z_interp,'linear');
@@ -272,8 +273,8 @@ hold on
 % plot solar surface
 [sphx,sphy,sphz] = sphere(150);
 % import aia data to cover solar surface
-aiaimg = imread(['E:\Research\Work\current_sheet_flapping\20210117\aia.png']);
-aiaimg = flipdim(aiaimg,1);
+aiaimg = imread(fullfile(cfg.legacy_work_root, '20210117', 'aia.png'));
+aiaimg = flip(aiaimg,1);
 % set sphere surface
 surf_aia = surf(sphx.*0.5,sphy.*0.5,sphz.*0.5);
 surf_aia.FaceColor = 'texturemap';
@@ -344,11 +345,11 @@ function v = SolveEqu(r,vc,rc)
     if r<rc
 %         syms vv
 %         v = double(vpasolve((vv/vc)^2-2*log(vv/vc)-4*log(r/rc)-4*(rc/r)+3,vv,[0,0.999*vc])); % unit: m/s
-        v = fsolve(func,[0.5*vc],options); % unit: m/s
+        v = fsolve(func,0.5*vc,options); % unit: m/s
     else
 %         syms vv
 %         v = double(vpasolve((vv/vc)^2-2*log(vv/vc)-4*log(r/rc)-4*(rc/r)+3,vv,[1.001,3*vc])); % unit: m/s
-        v = fsolve(func,[1.5*vc],options); % unit: m/s
+        v = fsolve(func,1.5*vc,options); % unit: m/s
     end
 end
 function [x,y,z,t] = CalcParker(r_num,r_gap,phi_std,thetaS,r_arr,vc,rc)

@@ -5,6 +5,9 @@ import sunkit_image.enhance as enhance
 import cv2
 import os
 
+from hcs_flapping.utils import ensure_directory
+from hcs_flapping.config import load_config
+
 save_or_not = 1
 
 # preparation
@@ -33,12 +36,16 @@ def radial_slit(start_x, start_y, end_x, end_y, dr):
             y_slit.append(y)
     return x_slit, y_slit
 
-# data path 
-jp2_path = 'E:/Research/Data/HelioViewer/LASCO_C2/20211007/'
-save_path = 'E:/Research/Work/tianwen_IPS/m1a07x_up/LASCO_observation/'
+# Data paths
+config = load_config()
+jp2_path = str(config.path('lasco_jp2_20211007', 'data/HelioViewer/LASCO_C2/20211007')) + os.sep
+save_path = str(config.path('corona_jp2_output', 'outputs/corona/20211007')) + os.sep
+if save_or_not:
+    for subdirectory in ('raw', 'mgn', 'marked'):
+        ensure_directory(os.path.join(save_path, subdirectory))
 
 # Read LASCO C2 raw fits to get colormaps
-raw_file = 'C:/Users/rzhuo/sunpy/data/20210117/lasco_c2/22799618.fts'
+raw_file = config.path('lasco_reference_fits', 'data/SOHO/LASCO_C2/reference.fts')
 raw_map = sunpy.map.Map(raw_file)
 cmap = raw_map.cmap
 
@@ -49,7 +56,7 @@ x_slit, y_slit = radial_slit(start_x=512, start_y=512, end_x=385, end_y=150, dr=
 # Iterate through .jp2 files
 slit_image = []
 for root, dirs, files in os.walk(jp2_path):
-    for file in files:
+    for file in sorted(files):
         if file.endswith('.jp2'):
             jp2_name = file            
 
@@ -76,7 +83,10 @@ for root, dirs, files in os.walk(jp2_path):
             plt.close()
 
             # Apply Mulitscale Guassian Normalization
-            mgn_image = enhance.mgn(jpg_image,sigma=[1.25, 2.5, 5, 10, 20],weights=[0.907,0.976,1,1,1], k=0.8, gamma=1, h=0.9)
+            mgn_image = enhance.mgn(
+                jpg_image, sigma=[1.25, 2.5, 5, 10, 20],
+                weights=[0.907, 0.976, 1, 1, 1], k=0.8, gamma=1, h=0.9,
+            )
             
             # Extract slit observations
             slit_pixels = [mgn_image[y, x] for x, y in zip(x_slit, y_slit)]
@@ -135,5 +145,3 @@ plt.title('slit observation')
 # plt.title('slit observation merged')
 
 plt.show()
-
-db

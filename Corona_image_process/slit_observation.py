@@ -1,14 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sunpy.map
 import sunkit_image.enhance as enhance
 import cv2
 import os
-import sunpy
-from scipy import fftpack, signal
+from scipy import signal
 
-import CoronaImageProcess_utils
-from CoronaImageProcess_utils import build_atrous_coef, a_trous_wavelet_2D, radial_slit, interp_to_slit, insert_nan_columns
+from hcs_flapping.utils import ensure_directory
+from hcs_flapping.config import load_config
+
+from CoronaImageProcess_utils import (
+    a_trous_wavelet_2D,
+    insert_nan_columns,
+    interp_to_slit,
+    radial_slit,
+)
 
 save_or_not = 1
 
@@ -22,13 +27,17 @@ min_x = 0
 min_y = 0
 x_slit, y_slit = radial_slit(beg_point, end_point, min_x, min_y, step=0.5)
 
-# data path 
-jp2_path = 'E:/Research/Data/HelioViewer/LASCO_C2/20211004/'
-save_path = 'E:/Research/Work/tianwen_IPS/LASCO_obs/20211004/a_trous_slit/' + str(end_point) + '_diff' + '/'
+# Data paths
+config = load_config()
+jp2_path = str(config.path('lasco_jp2_20211004', 'data/HelioViewer/LASCO_C2/20211004')) + os.sep
+slit_root = config.path('corona_slit_output', 'outputs/corona/slit/20211004')
+save_path = str(slit_root / (str(end_point) + '_diff')) + os.sep
+if save_or_not:
+    ensure_directory(save_path)
 
 slit_image = []
 for root, dirs, files in os.walk(jp2_path):
-    for file in files:
+    for file in sorted(files):
         if file.endswith('.jp2'):
             jp2_name = file            
 
@@ -47,16 +56,11 @@ for root, dirs, files in os.walk(jp2_path):
             output_w = a_trous_wavelet_2D(medfilt_image, level_num=4, method='B_spline')
             a_trous_image = np.sum(output_w[:,:,1:-1], axis=2)
             
-            # if save_or_not == 0:
-            #     plt.figure()
-            #     plt.subplot(2,2,1); plt.imshow(output_w[:,:,0], cmap='soholasco2', vmin=-3, vmax=3); plt.colorbar(); plt.title('Component 1')
-            #     plt.subplot(2,2,2); plt.imshow(output_w[:,:,1], cmap='soholasco2', vmin=-3, vmax=3); plt.colorbar(); plt.title('Component 2')
-            #     plt.subplot(2,2,3); plt.imshow(output_w[:,:,2], cmap='soholasco2', vmin=-3, vmax=3); plt.colorbar(); plt.title('Component 3')
-            #     plt.subplot(2,2,4); plt.imshow(output_w[:,:,-1], cmap='soholasco2'); plt.colorbar(); plt.title('Component 4')
-            #     plt.show()
-            
             # Apply Multiscale Guassian Normalization
-            mgn_image = enhance.mgn(jpg_image,sigma=[1.25, 2.5, 5, 10, 20],weights=[0.907,0.976,1,1,1], k=0.8, gamma=1, h=0.9)
+            mgn_image = enhance.mgn(
+                jpg_image, sigma=[1.25, 2.5, 5, 10, 20],
+                weights=[0.907, 0.976, 1, 1, 1], k=0.8, gamma=1, h=0.9,
+            )
             
             # Extract slit pixels
             image4slit = a_trous_image # image for slit observation
@@ -88,7 +92,7 @@ slit_image_with_zero = np.insert(slit_image, 0, 0, axis=1)
 slit_image_diff = np.diff(slit_image_with_zero, axis=1)
 slit_image = slit_image_diff
 
-# insertions = [(5, 2), (13, 1), (36, 1), (41, 1), (60, 2), (68, 1), (93, 1), (95, 2), (103, 2)] # for 20211007
+# Missing frames for 20211007 use a separate insertion list.
 insertions = [(5, 2), (13, 1), (42, 1), (61, 2), (69, 2), (96, 2), (104, 2)] # for 20211004
 slit_image_inserted = insert_nan_columns(slit_image, insertions)
 x_slit_image_inserted = np.arange(slit_image_inserted.shape[1])
@@ -96,7 +100,10 @@ y_slit_image_inserted = np.arange(slit_image_inserted.shape[0])
 y_slit_image_inserted = y_slit_image_inserted / 368 * (2 * 700) # [Mm]
 
 plt.figure(figsize=(12,8))
-plt.pcolormesh(x_slit_image_inserted, y_slit_image_inserted, slit_image_inserted,cmap='soholasco2',vmin=-1, vmax=1)
+plt.pcolormesh(
+    x_slit_image_inserted, y_slit_image_inserted, slit_image_inserted,
+    cmap='soholasco2', vmin=-1, vmax=1,
+)
 plt.xticks(np.arange(0, 120, 10), [f"{hour:02d}:00" for hour in range(0,23,2)])
 plt.xlabel('Time [HH:MM]')
 plt.ylabel('Solar Distance [Mm]')
@@ -146,7 +153,10 @@ slit_image_2D_fourier_inserted = insert_nan_columns(slit_image_2D_fourier, inser
 image4plot = slit_image_2D_fourier_inserted
 
 plt.figure(figsize=(12,6))
-plt.pcolormesh(x_slit_image_inserted, y_slit_image_inserted, image4plot, cmap='soholasco2', vmin=vmin, vmax=vmax)
+plt.pcolormesh(
+    x_slit_image_inserted, y_slit_image_inserted, image4plot,
+    cmap='soholasco2', vmin=vmin, vmax=vmax,
+)
 plt.xticks(np.arange(0, 120, 10), [f"{hour:02d}:00" for hour in range(0,23,2)])
 plt.xlabel('Time [HH:MM]')
 plt.ylabel('Solar Distance [Mm]')
@@ -162,7 +172,10 @@ slit_image_a_trous_inserted = insert_nan_columns(slit_image_a_trous, insertions)
 image4plot = slit_image_a_trous_inserted
 
 plt.figure(figsize=(12,6))
-plt.pcolormesh(x_slit_image_inserted, y_slit_image_inserted, image4plot, cmap='soholasco2', vmin=-1.5, vmax=1.5)
+plt.pcolormesh(
+    x_slit_image_inserted, y_slit_image_inserted, image4plot,
+    cmap='soholasco2', vmin=-1.5, vmax=1.5,
+)
 plt.xticks(np.arange(0, 120, 10), [f"{hour:02d}:00" for hour in range(0,23,2)])
 plt.xlabel('Time [HH:MM]')
 plt.ylabel('Solar Distance [Mm]')
@@ -173,5 +186,3 @@ if save_or_not == 1:
     plt.savefig(save_path + 'slit_obs_a_trous.jpg', format='jpg')
 
 plt.show()
-
-db

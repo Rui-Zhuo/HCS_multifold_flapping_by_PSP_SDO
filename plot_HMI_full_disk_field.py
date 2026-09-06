@@ -1,98 +1,122 @@
-import numpy as np
-import os
+"""Plot HMI full-disk magnetograms around a Carrington footpoint."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
 import re
-import astropy.units as u
-from astropy.coordinates import SkyCoord
-import sunpy.map
-from sunpy.coordinates import frames
-from sunpy.coordinates.ephemeris import get_earth
-import matplotlib.pyplot as plt
+
 import matplotlib.colors as colors
-from scipy.ndimage import median_filter
+import matplotlib.pyplot as plt
 
-NOAA_num = 2796
-save_or_not = 1
+from hcs_flapping.config import load_config
+from hcs_flapping.utils import ensure_directory, require_directory
 
-lon_ft = 101.4
-lat_ft = -27.2
-carr_lon = lon_ft * u.deg
-carr_lat = lat_ft * u.deg 
-
-Br_dir = 'E:/Research/Data/SDO/HMI/FullDisk/Magnetogram/4096/20210116-20210117/'
-save_dir = 'E:/Research/Work/HCS_multifold_flapping_by_PSP_SDO/20210117/magnetogram/'
-
-# (hmi.m_720s.yyyymmdd_HHMMSS_TAI.3.magnetogram.fits)
-pattern = re.compile(
-    rf'hmi\.m_720s\.(\d{{8}})_(\d{{6}})_TAI\.3\.magnetogram+\.fits'
+DEFAULT_INPUT = Path("data/SDO/HMI/full_disk")
+HMI_PATTERN = re.compile(
+    r"hmi\.m_720s\.(\d{8})_(\d{6})_TAI\.\d+\.magnetogram\.fits$",
+    re.IGNORECASE,
 )
 
-Br_files = [f for f in os.listdir(Br_dir) if f.endswith('.fits')]
 
-for Br_fn in Br_files:
-    match = pattern.match(Br_fn)
-    if not match:
-        continue
-    
-    REC_date = match.group(1)
-    REC_time = match.group(2)
-    
-    if REC_time[2:] != '0000':
-        continue
-    
-    Br_map = sunpy.map.Map(os.path.join(Br_dir, Br_fn))
-    
-    Br_data = Br_map.data
-    # Br_data_smoothed = median_filter(Br_data, size=17)
-    # Br_data_smoothed = median_filter(Br_data, size=3)
-    
-    obs_time = Br_map.date
-    earth_coord = get_earth(obs_time)
-    
-    carr_coord = SkyCoord(
-        lon=carr_lon,
-        lat=carr_lat,
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--config", type=Path, default=Path("config.toml"))
+    parser.add_argument("--input", type=Path)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--longitude", type=float)
+    parser.add_argument("--latitude", type=float)
+    parser.add_argument("--fov", type=float, help="Field of view in arcsec")
+    parser.add_argument("--all-cadences", action="store_true")
+    parser.add_argument("--show", action="store_true")
+    return parser.parse_args()
+
+
+def plot_magnetogram(file_path: Path, output_dir: Path, longitude_deg: float,
+                     latitude_deg: float, fov_arcsec: float, show: bool) -> Path:
+    """Plot one HMI map and mark the specified Carrington coordinate."""
+    import astropy.units as u
+    from astropy.coordinates import SkyCoord
+    import sunpy.map
+    from sunpy.coordinates import frames
+    from sunpy.coordinates.ephemeris import get_earth
+
+    hmi_map = sunpy.map.Map(file_path)
+    observer = get_earth(hmi_map.date)
+    carrington_coord = SkyCoord(
+        lon=longitude_deg * u.deg,
+        lat=latitude_deg * u.deg,
         frame=frames.HeliographicCarrington,
-        obstime=obs_time,
-        observer=earth_coord
+        obstime=hmi_map.date,
+        observer=observer,
+    )
+    x_pixel, y_pixel = hmi_map.world_to_pixel(
+        carrington_coord.transform_to(hmi_map.coordinate_frame)
     )
 
-    hpc_coord = carr_coord.transform_to(Br_map.coordinate_frame)
-    x_pix, y_pix = Br_map.world_to_pixel(hpc_coord)
-    
-    fig = plt.figure(figsize=(10, 8))
-    ax = fig.add_subplot(111, projection=Br_map)
-    
+    figure = plt.figure(figsize=(10, 8))
+    axes = figure.add_subplot(111, projection=hmi_map)
     norm = colors.SymLogNorm(linthresh=5, vmin=-500, vmax=500, base=10)
-    # im = plt.imshow(Br_data_smoothed, cmap='bwr', norm=norm)
-    im = plt.imshow(Br_data, cmap='bwr', norm=norm)
-    cbar = plt.colorbar(im, ax=ax, shrink=0.9, pad=0.05, label='Br (G)', extend='both')
-    
-    # contour = ax.contour(Br_data_smoothed, levels=[0], colors='k', linewidths=1, alpha=0.8)
-    
-    ax.scatter(x_pix, y_pix, color='lime', edgecolors='k', s=100, linewidths=2, 
-               label=f'Footpoint in Carr.Coord. \n ({carr_lon.value} deg., {carr_lat.value} deg.)')
-    ax.legend(loc='upper right', fontsize=10)
-    
-    arcsec_per_pixel = Br_map.scale.axis1 
-    fov_arcsec = 200 * u.arcsec
-    fov_pixels = (fov_arcsec / arcsec_per_pixel).value
-    half_fov = fov_pixels / 2 
-    
-    ax.set_xlim(x_pix.value - half_fov, x_pix.value + half_fov)
-    ax.set_ylim(y_pix.value - half_fov, y_pix.value + half_fov)
-    
-    ax.set_aspect('equal')
-    ax.set_title(REC_date + '_' + REC_time + '_magnetogram')
-    ax.invert_xaxis()
-    ax.invert_yaxis()
-    plt.tight_layout()
-    
-    save_filename = f'{REC_date}_{REC_time}_Br.png'
-    save_path = os.path.join(save_dir, save_filename)
-    
-    if save_or_not:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        plt.close()
-    else:
+    image = axes.imshow(hmi_map.data, cmap="bwr", norm=norm)
+    figure.colorbar(image, ax=axes, shrink=0.9, pad=0.05, label=r"$B_{LOS}$ (G)",
+                    extend="both")
+    axes.scatter(
+        x_pixel,
+        y_pixel,
+        color="lime",
+        edgecolors="black",
+        s=100,
+        linewidths=2,
+        label=f"Carrington footpoint\n({longitude_deg:.1f} deg, {latitude_deg:.1f} deg)",
+    )
+    axes.legend(loc="upper right", fontsize=10)
+    half_fov_pixels = ((fov_arcsec * u.arcsec) / hmi_map.scale.axis1).value / 2
+    axes.set_xlim(x_pixel.value - half_fov_pixels, x_pixel.value + half_fov_pixels)
+    axes.set_ylim(y_pixel.value - half_fov_pixels, y_pixel.value + half_fov_pixels)
+    axes.set_aspect("equal")
+    axes.set_title(f"{hmi_map.date.isot} HMI magnetogram")
+    axes.invert_xaxis()
+    axes.invert_yaxis()
+    figure.tight_layout()
+
+    match = HMI_PATTERN.match(file_path.name)
+    record_id = "_".join(match.groups()) if match else file_path.stem
+    output_path = output_dir / f"{record_id}_Br.png"
+    if show:
         plt.show()
-        db
+    else:
+        figure.savefig(output_path, dpi=300, bbox_inches="tight")
+        plt.close(figure)
+    return output_path
+
+
+def main() -> None:
+    """Plot all selected magnetograms in the configured directory."""
+    args = parse_args()
+    config = load_config(args.config)
+    input_dir = require_directory(args.input or config.path("hmi_full_disk", DEFAULT_INPUT),
+                                  "HMI full-disk directory")
+    output_dir = ensure_directory(args.output or config.path("output", "outputs") / "hmi")
+    longitude = args.longitude if args.longitude is not None else float(
+        config.get("hmi_plot", "footpoint_longitude_deg", 101.4)
+    )
+    latitude = args.latitude if args.latitude is not None else float(
+        config.get("hmi_plot", "footpoint_latitude_deg", -27.2)
+    )
+    fov = args.fov or float(config.get("hmi_plot", "fov_arcsec", 200.0))
+
+    selected = []
+    for path in sorted(input_dir.glob("*.fits")):
+        match = HMI_PATTERN.match(path.name)
+        if match and (args.all_cadences or match.group(2)[2:] == "0000"):
+            selected.append(path)
+    if not selected:
+        raise FileNotFoundError(f"No matching HMI FITS files found in {input_dir}")
+    for path in selected:
+        result = plot_magnetogram(path, output_dir, longitude, latitude, fov, args.show)
+        print(f"Processed: {result}")
+
+
+if __name__ == "__main__":
+    main()

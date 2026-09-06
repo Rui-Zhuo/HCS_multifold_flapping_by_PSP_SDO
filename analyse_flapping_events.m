@@ -1,11 +1,12 @@
 clear; close all;
+cfg = hcs_config();
 encounter = 7;
 dTime = 0.02;
 save_or_not = 0;
-mean_or_local = 0;
-which_cross = 0;
-data_store = ['E:\Research\Data\PSP\Encounter ',num2str(encounter),'\'];
-data_save  = ['E:\Research\Work\HCS_multifold_flapping_by_PSP_SDO\Encounter ',num2str(encounter),'\'];
+mean_or_local = 1;
+which_cross = 1;
+data_store = [fullfile(cfg.psp_data_root, ['Encounter ', num2str(encounter)]), filesep];
+data_save = [fullfile(cfg.work_root, ['Encounter ', num2str(encounter)]), filesep];
 %% which encounter
 if encounter == 5 % 2020-06-08 spi
     year = 2020;
@@ -628,7 +629,7 @@ for i_flap = 1:1%flap_num
     [spe_X,spe_Y] = meshgrid(spe_x_plot,spe_y_plot);
     h = pcolor(spe_X,spe_Y,log10(PA_eflux_plot));
     set(h,'Linestyle','none');
-    xlabel(['Time [HH:MM]']); ylabel({'314 eV'; 'e^- PA [deg.]'});
+    xlabel('Time [HH:MM]'); ylabel({'314 eV'; 'e^- PA [deg.]'});
     for i_cross = 1 : cross_num(i_flap)
         mark_beg = datenum(mark_beg_lst(i_cross,:));
         mark_end = datenum(mark_end_lst(i_cross,:));
@@ -644,14 +645,22 @@ for i_flap = 1:1%flap_num
         
     sgtitle(['PSP enounter ',num2str(encounter),' ',plot_beg_lst(i_flap,1:4),plot_beg_lst(i_flap,6:7),plot_beg_lst(i_flap,9:10),' ',plot_beg_lst(i_flap,12:19),'-',plot_end_lst(i_flap,12:19)]);
     if save_or_not == 1
-        saveas(gcf,['C:\Users\22242\Documents\STUDY\Work\current_sheet_flapping\Encounter ',num2str(encounter),'\flapping_events\',plot_beg_lst(i_flap,1:4),plot_beg_lst(i_flap,6:7),plot_beg_lst(i_flap,9:10),'_',plot_beg_lst(i_flap,12:13),plot_beg_lst(i_flap,15:16),plot_beg_lst(i_flap,18:19),'-',plot_end_lst(i_flap,12:13),plot_end_lst(i_flap,15:16),plot_end_lst(i_flap,18:19),'.png']);
+        output_name = [plot_beg_lst(i_flap,1:4),plot_beg_lst(i_flap,6:7), ...
+            plot_beg_lst(i_flap,9:10),'_',plot_beg_lst(i_flap,12:13), ...
+            plot_beg_lst(i_flap,15:16),plot_beg_lst(i_flap,18:19),'-', ...
+            plot_end_lst(i_flap,12:13),plot_end_lst(i_flap,15:16), ...
+            plot_end_lst(i_flap,18:19),'.png'];
+        output_dir = fullfile(data_save, 'flapping_events');
+        if ~exist(output_dir, 'dir'); mkdir(output_dir); end
+        saveas(gcf, fullfile(output_dir, output_name));
     end
 end
 %% functions
 function [V,D,ratio21,ratio32] = get_LMN(Br,Bt,Bn,fld_Epoch,time_calc_beg,time_calc_end)
-    Br_calc = Br(find(fld_Epoch >= time_calc_beg & fld_Epoch <= time_calc_end)); Br_calc(isnan(Br_calc)) = mean(Br_calc,'omitnan');
-    Bt_calc = Bt(find(fld_Epoch >= time_calc_beg & fld_Epoch <= time_calc_end)); Bt_calc(isnan(Bt_calc)) = mean(Bt_calc,'omitnan');
-    Bn_calc = Bn(find(fld_Epoch >= time_calc_beg & fld_Epoch <= time_calc_end)); Bn_calc(isnan(Bn_calc)) = mean(Bn_calc,'omitnan');
+    calc_index = fld_Epoch >= time_calc_beg & fld_Epoch <= time_calc_end;
+    Br_calc = Br(calc_index); Br_calc(isnan(Br_calc)) = mean(Br_calc,'omitnan');
+    Bt_calc = Bt(calc_index); Bt_calc(isnan(Bt_calc)) = mean(Bt_calc,'omitnan');
+    Bn_calc = Bn(calc_index); Bn_calc(isnan(Bn_calc)) = mean(Bn_calc,'omitnan');
     M = [mean(Br_calc.*Br_calc) - mean(Br_calc)*mean(Br_calc), mean(Br_calc.*Bt_calc) - mean(Br_calc)*mean(Bt_calc), mean(Br_calc.*Bn_calc) - mean(Br_calc)*mean(Bn_calc);
          mean(Bt_calc.*Br_calc) - mean(Bt_calc)*mean(Br_calc), mean(Bt_calc.*Bt_calc) - mean(Bt_calc)*mean(Bt_calc), mean(Bt_calc.*Bn_calc) - mean(Bt_calc)*mean(Bn_calc);
          mean(Bn_calc.*Br_calc) - mean(Bn_calc)*mean(Br_calc), mean(Bn_calc.*Bt_calc) - mean(Bn_calc)*mean(Bt_calc), mean(Bn_calc.*Bn_calc) - mean(Bn_calc)*mean(Bn_calc)];

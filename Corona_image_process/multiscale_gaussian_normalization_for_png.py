@@ -1,14 +1,20 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sunpy.map
 import sunkit_image.enhance as enhance
 import cv2
 import os
 
+from hcs_flapping.utils import ensure_directory
+from hcs_flapping.config import load_config
+
 save_or_not = 0
 
-png_path = 'E:/Research/Data/STEREO/COR2/'
-save_path = 'E:/Research/Work/[else]/corona_image_process/STEREO/'
+config = load_config()
+png_path = str(config.path('stereo_cor2_png', 'data/STEREO/COR2')) + os.sep
+save_path = str(config.path('stereo_cor2_output', 'outputs/corona/STEREO')) + os.sep
+if save_or_not:
+    for subdirectory in ('raw', 'mgn'):
+        ensure_directory(os.path.join(save_path, subdirectory))
 
 # Select observation slit
 center_x = 512
@@ -28,7 +34,7 @@ for theta in np.arange(0, 2*np.pi, dtheta):
 # Iterate through .png files
 slit_image = []
 for root, dirs, files in os.walk(png_path):
-    for file in files:
+    for file in sorted(files):
         if file.endswith('.png'):
             png_name = file
             # Read LASCO C2 png images processed by Helioviewer.org
@@ -49,7 +55,10 @@ for root, dirs, files in os.walk(png_path):
             plt.close()
 
             # Apply Mulitscale Guassian Normalization
-            mgn_image = enhance.mgn(png_image,sigma=[1.25, 2.5, 5, 10, 20],weights=[0.907,0.976,1,1,1], k=0.7, gamma=1, h=0.8)
+            mgn_image = enhance.mgn(
+                png_image, sigma=[1.25, 2.5, 5, 10, 20],
+                weights=[0.907, 0.976, 1, 1, 1], k=0.7, gamma=1, h=0.8,
+            )
             
             # Extract slit observations
             slit_pixels = [mgn_image[y, x] for x, y in zip(x_slit, y_slit)]
@@ -76,7 +85,7 @@ slit_image_array = np.column_stack(slit_image)
 plt.figure(figsize=(12,8))
 plt.pcolor(slit_image_array,cmap='seismic',vmin=0,vmax=0.8)
 plt.colorbar()
-xlabel('Frame')
+plt.xlabel('Frame')
 plt.title('slit observation')
 
 # Split when there is no LASCO C2 data

@@ -1,9 +1,11 @@
-clear all; close all;
+clear; close all;
+cfg = hcs_config();
 encounter = 7;
 dTime = 0.02;
 save_or_not = 0;
-data_store = ['D:\STUDY\Data\PSP\Encounter ',num2str(encounter),'\'];
-data_save  = ['D:\STUDY\Work\current_sheet_flapping\Encounter ',num2str(encounter),'\flapping_events\'];
+data_store = [fullfile(cfg.psp_data_root, ['Encounter ', num2str(encounter)]), filesep];
+data_save = [fullfile(cfg.work_root, ['Encounter ', num2str(encounter)], ...
+    'flapping_events'), filesep];
 %% which encounter
 if encounter == 5 % 2020-06-08 spi
     year = 2020;
@@ -99,12 +101,12 @@ for i_flap = 1:1%flap_num
     std_time = linspace(time_plot_beg, time_plot_end, nTime);
     
     std_Epoch = interp1(spi_Epoch_plot,spi_Epoch_plot,std_time,'pchip');
-    Vr_spi_interp = interp1(spi_Epoch_plot,Vr_spi_plot,std_time,'linear'); Vr_spi_interp(isnan(Vr_spi_interp)) = nanmean(Vr_spi_interp);
-    Vt_spi_interp = interp1(spi_Epoch_plot,Vt_spi_plot,std_time,'linear'); Vt_spi_interp(isnan(Vt_spi_interp)) = nanmean(Vt_spi_interp);
-    Vn_spi_interp = interp1(spi_Epoch_plot,Vn_spi_plot,std_time,'linear'); Vn_spi_interp(isnan(Vn_spi_interp)) = nanmean(Vn_spi_interp);
-    Vr_spc_interp = interp1(spc_Epoch_plot,Vr_spc_plot,std_time,'linear'); Vr_spc_interp(isnan(Vr_spc_interp)) = nanmean(Vr_spc_interp);
-    Vt_spc_interp = interp1(spc_Epoch_plot,Vt_spc_plot,std_time,'linear'); Vt_spc_interp(isnan(Vt_spc_interp)) = nanmean(Vt_spc_interp);
-    Vn_spc_interp = interp1(spc_Epoch_plot,Vn_spc_plot,std_time,'linear'); Vn_spc_interp(isnan(Vn_spc_interp)) = nanmean(Vn_spc_interp);
+    Vr_spi_interp = interp1(spi_Epoch_plot,Vr_spi_plot,std_time,'linear'); Vr_spi_interp(isnan(Vr_spi_interp)) = mean(Vr_spi_interp,'omitnan');
+    Vt_spi_interp = interp1(spi_Epoch_plot,Vt_spi_plot,std_time,'linear'); Vt_spi_interp(isnan(Vt_spi_interp)) = mean(Vt_spi_interp,'omitnan');
+    Vn_spi_interp = interp1(spi_Epoch_plot,Vn_spi_plot,std_time,'linear'); Vn_spi_interp(isnan(Vn_spi_interp)) = mean(Vn_spi_interp,'omitnan');
+    Vr_spc_interp = interp1(spc_Epoch_plot,Vr_spc_plot,std_time,'linear'); Vr_spc_interp(isnan(Vr_spc_interp)) = mean(Vr_spc_interp,'omitnan');
+    Vt_spc_interp = interp1(spc_Epoch_plot,Vt_spc_plot,std_time,'linear'); Vt_spc_interp(isnan(Vt_spc_interp)) = mean(Vt_spc_interp,'omitnan');
+    Vn_spc_interp = interp1(spc_Epoch_plot,Vn_spc_plot,std_time,'linear'); Vn_spc_interp(isnan(Vn_spc_interp)) = mean(Vn_spc_interp,'omitnan');
     carr_lat_interp = interp1(spc_Epoch_plot,carr_lat_plot,std_time,'linear');
     carr_lon_interp = interp1(spc_Epoch_plot,carr_lon_plot,std_time,'linear');
     sc_distan_interp = interp1(spc_Epoch_plot,sc_distan_plot,std_time,'linear');
@@ -208,7 +210,7 @@ for i_flap = 1:1%flap_num
     end
     %% orbit
     rr = zeros(1,cross_num(i_flap));
-    tt = 200 * [1:1:cross_num(i_flap)];
+    tt = 200 * (1:cross_num(i_flap));
     nn = zeros(1,cross_num(i_flap));
     rr_min = -100; rr_max = 100;
     tt_min =  0; tt_max = 200 * (cross_num(i_flap) + 1);

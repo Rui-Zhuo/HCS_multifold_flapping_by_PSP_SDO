@@ -1,67 +1,75 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import sunpy.map
-import os
+"""Plot SDO/HMI SHARP CEA magnetograms for one active region."""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
 import re
 
-NOAA_num = 2796
-SHARP_num = 7532
-save_or_not = 0
+import matplotlib.pyplot as plt
 
-lon_ft = 101.42851491767911
-lat_ft = -27.155166512345676
+from hcs_flapping.config import load_config
+from hcs_flapping.utils import ensure_directory, require_directory, require_file
 
-Br_dir = f'E:/Research/Data/SDO/HMI/SHARP/AR{NOAA_num}/'
-save_dir = 'E:/Research/Work/HCS_multifold_flapping_by_PSP_SDO/20210117/SHARP/'
+DEFAULT_INPUT = Path("data/SDO/HMI/SHARP/AR2796")
 
-# (hmi.sharp_cea_720s.SHARP_num.yyyymmdd_hhMMSS_TAI.xxx.fits)
-pattern = re.compile(
-    rf'hmi\.sharp_cea_720s\.{SHARP_num}\.(\d{{8}})_(\d{{6}})_TAI\.[A-Za-z]+\.fits'
-)
 
-Br_files = [f for f in os.listdir(Br_dir) if f.endswith('.fits')]
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--config", type=Path, default=Path("config.toml"))
+    parser.add_argument("--input", type=Path)
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--sharp", type=int)
+    parser.add_argument("--date", default="20210117", help="Record date as YYYYMMDD")
+    parser.add_argument("--show", action="store_true")
+    return parser.parse_args()
 
-for Br_fn in Br_files:
-    match = pattern.match(Br_fn)
-    if not match:
-        continue
-    
-    REC_date = match.group(1)
-    REC_time = match.group(2)
-    
-    if REC_date != '20210117':
-        continue
-    
-    mag_fn = f'hmi.sharp_cea_720s.{SHARP_num}.{REC_date}_{REC_time}_TAI.magnetogram.fits'
-    
-    Br_map = sunpy.map.Map(os.path.join(Br_dir, Br_fn))
-    
-    mag_map = sunpy.map.Map(os.path.join(Br_dir, mag_fn))
-    
-    Br = Br_map.data
-    mag = mag_map.data
-    
-    fig, ax = plt.subplots(figsize=(8, 3))
-    
-    im1 = ax.pcolormesh(mag, cmap='gray')
-    cbar1 = fig.colorbar(im1, ax=ax, label='magnetogram (G)')
-    
-    # ax.plot(rect_x, rect_y, 'k-', linewidth=2) 
-    
-    # levels = [-600, -400, -200, 200, 400, 600]
-    # im2 = ax.contour(Br, levels=levels, cmap='bwr')
-    # cbar2 = fig.colorbar(im2, ax=ax, label='Br (G)', extend='both')
-    
-    ax.axis('equal')
-    plt.title(f'{REC_date}_{REC_time}', fontsize=14)
-    plt.tight_layout()
-    
-    save_filename = f'{REC_date}_{REC_time}_Br_mag.png'
-    save_path = os.path.join(save_dir, save_filename)
-    
-    if save_or_not:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        plt.close()
-    else:
-        plt.show()
-        db
+
+def main() -> None:
+    """Plot matching SHARP magnetograms."""
+    args = parse_args()
+    import sunpy.map
+
+    config = load_config(args.config)
+    input_dir = require_directory(args.input or config.path("hmi_sharp", DEFAULT_INPUT),
+                                  "SHARP directory")
+    output_dir = ensure_directory(args.output or config.path("output", "outputs") / "sharp")
+    sharp = args.sharp or int(config.get("jsoc", "sharp_number", 7532))
+    pattern = re.compile(
+        rf"hmi\.sharp_cea_720s\.{sharp}\.(\d{{8}})_(\d{{6}})_TAI\.Br\.fits$",
+        re.IGNORECASE,
+    )
+
+    count = 0
+    for br_path in sorted(input_dir.glob("*.fits")):
+        match = pattern.match(br_path.name)
+        if not match or match.group(1) != args.date:
+            continue
+        record_date, record_time = match.groups()
+        magnetogram_path = require_file(
+            input_dir
+            / f"hmi.sharp_cea_720s.{sharp}.{record_date}_{record_time}_TAI.magnetogram.fits",
+            "paired SHARP magnetogram",
+        )
+        magnetogram = sunpy.map.Map(magnetogram_path)
+        figure, axes = plt.subplots(figsize=(8, 3))
+        image = axes.pcolormesh(magnetogram.data, cmap="gray", shading="auto")
+        figure.colorbar(image, ax=axes, label="magnetogram (G)")
+        axes.set_aspect("equal")
+        axes.set_title(f"{record_date}_{record_time}", fontsize=14)
+        figure.tight_layout()
+        output_path = output_dir / f"{record_date}_{record_time}_Br_mag.png"
+        if args.show:
+            plt.show()
+        else:
+            figure.savefig(output_path, dpi=300, bbox_inches="tight")
+            plt.close(figure)
+        count += 1
+        print(f"Processed: {output_path}")
+    if count == 0:
+        raise FileNotFoundError(f"No SHARP Br records for {args.date} found in {input_dir}")
+
+
+if __name__ == "__main__":
+    main()

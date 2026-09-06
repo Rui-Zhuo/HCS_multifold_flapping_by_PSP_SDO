@@ -1,5 +1,6 @@
 close all; clear
-save_dir = 'E:\Research\Work\HCS_multifold_flapping_by_PSP_SDO\Encounter 7\';
+cfg = hcs_config();
+save_dir = [fullfile(cfg.work_root, 'Encounter 7'), filesep];
 e_LMN_file = [save_dir, 'e_LMN.csv'];
 e_LMN_mean_file = [save_dir, 'e_LMN_mean.csv'];
 

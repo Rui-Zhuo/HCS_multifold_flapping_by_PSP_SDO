@@ -1,0 +1,38 @@
+[project]
+event_date = "2021-01-17"
+random_seed = 20210117
+
+[paths]
+hmi_full_disk = "data/SDO/HMI/full_disk"
+hmi_sharp = "data/SDO/HMI/SHARP/AR2796"
+hmi_synoptic = "data/SDO/HMI/hmi.Synoptic_Mr.2239.fits"
+gong_synoptic = "data/GONG/202101171314.fits"
+fdips_output = "data/FDIPS"
+lasco_jp2_20211004 = "data/HelioViewer/LASCO_C2/20211004"
+lasco_jp2_20211007 = "data/HelioViewer/LASCO_C2/20211007"
+lasco_reference_fits = "data/SOHO/LASCO_C2/reference.fts"
+stereo_cor2_png = "data/STEREO/COR2"
+corona_atrous_output = "outputs/corona/20211004"
+corona_slit_output = "outputs/corona/slit/20211004"
+corona_jp2_output = "outputs/corona/20211007"
+stereo_cor2_output = "outputs/corona/STEREO"
+output = "outputs"
+
+[jsoc]
+email = "your-email@example.com"
+start = "2021-01-16T00:00:00"
+end = "2021-01-17T23:59:59"
+cadence_minutes = 12
+sharp_number = 7532
+
+[hmi_plot]
+noaa_number = 2796
+footpoint_longitude_deg = 101.4
+footpoint_latitude_deg = -27.2
+fov_arcsec = 200.0
+
+[pfss]
+nrho = 10
+source_surface_radius = 2.5
+field_limit_gauss = 20.0
+magnetogram = "hmi"
